@@ -47,7 +47,7 @@ public class JWTTokenAutenticacaoService {
         // adiciona token no cabeçalho http
         response.addHeader(HEADER_STRING, token); // Authorization: Bearer 3498hih345jkh345ui53iu5hyi
 
-        liberarCORS(response);
+        liberacaoCors(response);
 
         // adiciona token como resposta no corpo do http
         response.getWriter().write("{\"Authorization\": \"" + token + "\"}");
@@ -61,10 +61,12 @@ public class JWTTokenAutenticacaoService {
 
         if (token != null) {
 
+            String tokenLimpo = token.replace(TOKEN_PREFIX, "").trim();
+
             /*faz a validação do token do usu[ario na requisição*/
             String user = Jwts.parser()
                     .setSigningKey(SECRET)  /*Aqui vem assim a resposta: Bearer i345h6kj43klndngiqpijfasdnfip235*/
-                    .parseClaimsJws(token.replace(TOKEN_PREFIX, ""))   /*Ai aqui já vem assim: i345h6kj43klndngiqpijfasdnfip235*/
+                    .parseClaimsJws(tokenLimpo)   /*Ai aqui já vem assim: i345h6kj43klndngiqpijfasdnfip235*/
                     .getBody()
                     .getSubject();   /*E aqui ja sai assim a resposta: João Silva*/
 
@@ -75,19 +77,23 @@ public class JWTTokenAutenticacaoService {
                         .findUserByLogin(user);
 
                 if (usuario != null) {
-                    return new UsernamePasswordAuthenticationToken(
-                            usuario.getLogin(),
-                            usuario.getSenha(),
-                            usuario.getAuthorities());
+
+                    if(tokenLimpo.equalsIgnoreCase(usuario.getToken())) {
+
+                        return new UsernamePasswordAuthenticationToken(
+                                usuario.getLogin(),
+                                usuario.getSenha(),
+                                usuario.getAuthorities());
+                    }
                 }
             }
         }
-        liberarCORS(response);
+        liberacaoCors(response);
         return null;
     }
 
     // CORS policy
-    private void liberarCORS(HttpServletResponse response) {
+    private void liberacaoCors(HttpServletResponse response) {
         if (response.getHeader("Access-Control-Allow-Origin") == null) {
             response.addHeader("Access-Control-Allow-Origin", "*");
         }

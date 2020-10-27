@@ -24,6 +24,8 @@ public class Usuario implements UserDetails {
 
     private String senha;
 
+    private String token = "";
+
     @OneToMany(mappedBy = "usuario", orphanRemoval = true, cascade = CascadeType.ALL)
     private List<Telefone> telefones = new ArrayList<>();
 
@@ -82,6 +84,14 @@ public class Usuario implements UserDetails {
 
     public void setSenha(String senha) {
         this.senha = senha;
+    }
+
+    public String getToken() {
+        return token;
+    }
+
+    public void setToken(String token) {
+        this.token = token;
     }
 
     public String getNome() {
