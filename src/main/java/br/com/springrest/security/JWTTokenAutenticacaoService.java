@@ -59,35 +59,43 @@ public class JWTTokenAutenticacaoService {
         /*Pega o token enviado no cabeçalho Http*/
         String token = request.getHeader(HEADER_STRING);
 
-        if (token != null) {
+        try {
 
-            String tokenLimpo = token.replace(TOKEN_PREFIX, "").trim();
+            if (token != null) {
 
-            /*faz a validação do token do usu[ario na requisição*/
-            String user = Jwts.parser()
-                    .setSigningKey(SECRET)  /*Aqui vem assim a resposta: Bearer i345h6kj43klndngiqpijfasdnfip235*/
-                    .parseClaimsJws(tokenLimpo)   /*Ai aqui já vem assim: i345h6kj43klndngiqpijfasdnfip235*/
-                    .getBody()
-                    .getSubject();   /*E aqui ja sai assim a resposta: João Silva*/
+                String tokenLimpo = token.replace(TOKEN_PREFIX, "").trim();
 
-            if (user != null) {
-                Usuario usuario = ApplicationContextLoad
-                        .getApplicationContext()
-                        .getBean(UsuarioRepository.class)
-                        .findUserByLogin(user);
+                /*faz a validação do token do usu[ario na requisição*/
+                String user = Jwts.parser()
+                        .setSigningKey(SECRET)  /*Aqui vem assim a resposta: Bearer i345h6kj43klndngiqpijfasdnfip235*/
+                        .parseClaimsJws(tokenLimpo)   /*Ai aqui já vem assim: i345h6kj43klndngiqpijfasdnfip235*/
+                        .getBody()
+                        .getSubject();   /*E aqui ja sai assim a resposta: João Silva*/
 
-                if (usuario != null) {
+                if (user != null) {
+                    Usuario usuario = ApplicationContextLoad
+                            .getApplicationContext()
+                            .getBean(UsuarioRepository.class)
+                            .findUserByLogin(user);
 
-                    if(tokenLimpo.equalsIgnoreCase(usuario.getToken())) {
+                    if (usuario != null) {
 
-                        return new UsernamePasswordAuthenticationToken(
-                                usuario.getLogin(),
-                                usuario.getSenha(),
-                                usuario.getAuthorities());
+                        if (tokenLimpo.equalsIgnoreCase(usuario.getToken())) {
+
+                            return new UsernamePasswordAuthenticationToken(
+                                    usuario.getLogin(),
+                                    usuario.getSenha(),
+                                    usuario.getAuthorities());
+                        }
                     }
                 }
             }
+        }catch (io.jsonwebtoken.ExpiredJwtException e){
+            try {
+                response.getOutputStream().println("TOKEN EXPIROU! É necessário novo TOKEN");
+            } catch (IOException ex) {}
         }
+
         liberacaoCors(response);
         return null;
     }
